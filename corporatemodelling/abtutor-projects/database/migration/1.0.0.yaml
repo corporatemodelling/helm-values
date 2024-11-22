@@ -1,0 +1,97 @@
+# Default values for abtutor-database.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride:
+fullnameOverride:
+
+# The name of the service account to use.
+serviceAccountName:
+
+# Job restart policy
+restartPolicy: OnFailure
+
+# How long to keep a completed Job (in seconds), before deleting it
+ttlSecondsAfterFinished: 120
+
+# Image registries.
+registry:
+  # If image version is NOT a prerelease, this will be used.
+  # Build script will replace this placeholder with the actual value.
+  cmsPublicRegistry: ghcr.io/corporatemodelling
+  # If image version IS a prerelease, this will be used.
+  # Build script will replace this placeholder with the actual value.
+  cmsPrivateRegistry: cr.corporatemodelling.com
+
+# Information for the migration job
+migration:
+  image:
+    # If this is defined, it will override the public/private registry calculation.
+    registry:
+    repository: corporatemodelling/abtutor-projects/database/flyway
+    pullPolicy:
+    tag: "1.0.0"
+  # Flyway placeholders
+  placeholders:
+    # Email address for main realm admin user.
+    adminEmail: bob@test.com
+    # Keycloak administrative role IDs
+    realmAdminRoleId: 1cdc7fe4-a7d7-40d5-88ca-8de73e878da6
+    manageAccountRoleId: f9944ed4-02e7-4279-8ea7-f610584c4426
+    # ABtutor admin role IDs
+    adminRoleId: 21591f2c-7569-4798-a01a-ee9206fde416
+    # This determines whether or not to install test data
+    environment: production
+  # Flyway options
+  connectRetries: 60
+  validateFilenames: true
+  additionalOptions:
+  jdbcUrlSuffix:
+  # Set this a version number if you want to baseline the schema before migration.
+  baselineVersion:
+
+# Information about the DB service that the migration job will talk to.
+database:
+  # Set this to either cockroachdb or mssql
+  type: cockroachdb
+  # The name of the database that we're working with
+  # If not set, the name of the default database (depending on database type) will be used.
+  name:
+  # Name of the database service to talk to.
+  service:
+  # Port that DB service is listening on. If not set, default DB port (for the
+  # relevant database type) is used.
+  port:
+  # DB connection credentials
+  credentials:
+    # If you don't specify the user, you'll get the default admin user.
+    user:
+    # Only set this if you are using SSL certificate authentication.
+    # Named secret should contain tls.crt, tls.key, and ca.crt
+    sslSecret:
+    # Only set this if you are using password authentication.
+    password:
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+envFrom: []
+env: []
+volumes: []
+volumeMounts: []
