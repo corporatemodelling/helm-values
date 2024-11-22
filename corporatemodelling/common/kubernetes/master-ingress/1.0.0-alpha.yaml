@@ -1,0 +1,5 @@
+name: master-ingress
+ingressClassName: nginx
+host: www.yourdomain.com
+certManagerIssuer:
+tlsSecret: your-tls-secret
