@@ -92,6 +92,7 @@ api:
       tag: latest
     replicaCount: 1
   xero:
+    # Set for test
     clientId: "0DF206319EFB4DA6AB442625123A8FB7"
     clientSecret: VuyHmmse27OmZhxrV79_e6Ts4_ocOhqUp5H8Dlj4W2ixES51
     # Rather than supply the secret directly, you can alternatively get the value from an existing secret.
