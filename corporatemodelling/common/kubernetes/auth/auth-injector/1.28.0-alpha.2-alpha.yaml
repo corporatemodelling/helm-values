@@ -1,0 +1,296 @@
+# Default values for auth-injector.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Image registries.
+registry:
+  # If image version is NOT a prerelease, this will be used.
+  # Build script will replace this placeholder with the actual value.
+  cmsPublicRegistry: ghcr.io/corporatemodelling
+  # If image version IS a prerelease, this will be used.
+  # Build script will replace this placeholder with the actual value.
+  cmsPrivateRegistry: cr.corporatemodelling.com
+  # If this is set, it is used regardless.
+  override:
+
+# Only Kubernetes server 1.28+ supports matchConditions, which are used by the webhooks.
+# If using 1.27 or earlier, set this to false, and label your deployments/services
+# explicitly (see README).
+useMatchConditions: true
+
+replicaCount: 1
+
+image:
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# How long the TLS certificate (used for communicator between the mutating webhook and the mutator
+# service) will be valid for. It's 100% internal, so ... how about 100 years?
+# WARNING: if you set this too high, the date arithmetic wraps around, so you could end up with an
+# expiry date in Victorian times.
+certificate:
+  lifespanDays: 36500
+
+nginx:
+  # Ports that NGINX will be listening on. Don't use anything that other services
+  # in the pod might be using.
+  ports:
+    # Requests to this port will be proxied to the auth proxy, and then forwarded to the webservice
+    # if auth proxy allows it.
+    authProxy: 43485
+  # Name for the nginx container.
+  name: nginx
+  # Container image to use.
+  image:
+    repository: nginx
+    tag: 1.27.0
+
+auth:
+  # All annotations and labels pertaining to this auth-injector should have this namespace.
+  namespace: corporatemodelling.com
+  annotations:
+    # Annotations that indicate that a pod should be have an NGINX auth sidecar injected.
+    # This is the type of authentication that will be performed by the proxy.
+    authenticationPolicyIds: "{{ .Values.auth.namespace }}/pre-authentication-policy-ids"
+    authorizationPolicyIds: "{{ .Values.auth.namespace }}/pre-authorization-policy-ids"
+    # Annotations that indicate which service's ports should be redirected to the
+    # NGINX sidecar. Annotation must have a non-blank value for redirection to be applied.
+    servicePortNameRedirect: "{{ .Values.auth.namespace }}/auth-port-name-redirect"
+    serviceSourcePortRedirect: "{{ .Values.auth.namespace }}/auth-source-port-redirect"
+    serviceTargetPortRedirect: "{{ .Values.auth.namespace }}/auth-target-port-redirect"
+    # Annotation with a true/false value which decides whether, should authentication fail,
+    # shall we still let the request through?
+    allowAuthenticationFailure: "{{ .Values.auth.namespace }}/allow-authentication-failure"
+    # A regular expression that will match any unprotected endpoints. Nginx will be configured
+    # to NOT pass these requests to the auth-proxy.
+    unprotectedEndpointsRegex: "{{ .Values.auth.namespace }}/unprotected-endpoints-regex"
+    # A boolean value to add to an ingress, to state that you want an ingress rule applied
+    # which will redirect the OIDC callback to the injected OIDC callback-handling service.
+    # Not currently working, so ignore this.
+    addOidcCallbackEndpoint: "{{ .Values.auth.namespace }}/add-oidc-callback-endpoint"
+    # JSON for the authorizationPolicies part of the auth-config in the protected webservice container.
+    # Defaults to {}.
+    # If the non-Json value is provided, it should be a list of strings, separated by commas. It
+    # will be converted to a dictionary with every string from the list mapping to ["pre_authenticated"].
+    # If both are provided, the ...Json value takes precedence.
+    authorizationPoliciesJson: "{{ .Values.auth.namespace }}/authorization-policies-json"
+    authorizationPolicies: "{{ .Values.auth.namespace }}/authorization-policies"
+    # JSON for the defaultAuthenticationPolicies part of the auth-config in the protected webservice container.
+    # Defaults to ["pre_authenticated"], which simply forces the pre-authenticated claims provider to
+    # return the pre-authenticated claims.
+    defaultAuthenticationPoliciesJson: "{{ .Values.auth.namespace }}/default-authentication-policies-json"
+    # JSON for the routeAuthorizationPolicies part of the auth-config in the auth-proxy.
+    # Defaults to {}.
+    routeAuthorizationPoliciesJson: "{{ .Values.auth.namespace }}/route-authorization-policies-json"
+    # Claim types that contains user name and role
+    authenticationNameClaimType: "{{ .Values.auth.namespace }}/authentication-name-claim-type"
+    authenticationRoleClaimType: "{{ .Values.auth.namespace }}/authentication-role-claim-type"
+  # Config for the actual OPA auth service
+  opa:
+    # Base URL for the OPA server that acts as an auth delegate for Auth Proxy.
+    baseUrl: http://{{ .Release.Name }}-opa.{{ .Release.Namespace }}.svc:8181
+    # Prefixes for authn/authz requests.
+    pathPrefixes:
+      authentication: /v0/data/cms/authn/
+      authorization: /v0/data/cms/authz/
+    # Request templates for authn/authz requests, appended to the baseUrl+pathPrefix.
+    # {{policy}} will be replaced with the policy ID being evaluated.
+    requestTemplates:
+      authentication: "{{policy}}"
+      authorization: "{{policy}}"
+  # The OpenID Connect service.
+  oidc:
+    # OIDC-related annotations
+    annotations:
+      # URI pointing to the OpenID Connect configuration we are using. This should define
+      # the various authorization/token endpoints, JSON web key sets, etc.
+      configuration: "{{ .Values.auth.namespace }}/oidc-configuration"
+      # Secret from the OIDC client app.
+      clientId: "{{ .Values.auth.namespace }}/oidc-client-id"
+      # ID of client secret, from K8S.
+      clientSecretId: "{{ .Values.auth.namespace }}/oidc-client-secret-id"
+      # Any additional parameters to tag onto the authorization code request. This string
+      # should be a valid URL query, starting with a "&" to separate it from the pre-configured
+      # arguments.
+      additionalAuthorizeParameters: "{{ .Values.auth.namespace }}/oidc-additional-authorize-parameters"
+      # OIDC scope that will be requested. Default is "openid+profile+email"
+      scope: "{{ .Values.auth.namespace }}/oidc-scope"
+      # Value indicating how the PKCE code challenge should be encoded (e.g. "S256", "plain").
+      # If 'none', PKCE is not used. Default is 'S256'
+      pkceCodeChallenge: "{{ .Values.auth.namespace }}/oidc-pkce-code-challenge"
+      # Set this to validate the issuer of the JWT ID token.
+      expectedIssuer: "{{ .Values.auth.namespace }}/oidc-expected-issuer"
+      # Set this to validate the audience of the JWT ID token.
+      expectedAudience: "{{ .Values.auth.namespace }}/oidc-expected-audience"
+      # What type of content should be sent to the token request endpoint? e.g. application/json or application/x-www-form-urlencoded
+      # Some IDPs will only accept one.
+      tokenRequestContentType: "{{ .Values.auth.namespace }}/oidc-token-request-content-type"
+      # Logout annotations. Both must be set for logout to be enabled.
+      # Endpoint for logout, if required. Typical value would be e.g. "/logout"
+      logoutEndpoint: "{{ .Values.auth.namespace }}/oidc-logout-endpoint"
+      # URI to redirect to after successful logout.
+      postLogoutRedirectUri: "{{ .Values.auth.namespace }}/oidc-post-logout-redirect-uri"
+      # Base URI for a client secrets provider.
+      clientSecretProviderBaseUri: "{{ .Values.auth.namespace }}/oidc-client-secret-provider-base-uri"
+    # Configuration for the OIDC ingress.
+    ingress:
+      # If minion, TLS is expected to be set up by the master.
+      # Any non-"minion" value means master.
+      mergeableType: minion
+      # HTTP requests that start with this prefix will be redirected to the OpenID Connect service.
+      routePrefix: /oidcLogin
+      # Dictionary of domains, and their TLS secrets.
+      # TLS secrets will only be used if mergeableType is not "minion"
+      hosts:
+      #  www.blah.com: blah-secret
+      #  www.yap.com: yap-secret
+    # Requests to the authorize endpoint can pass the original request URI as a query parameter
+    # with this name.
+    originalRequestUriQueryParameter: originalRequestUri
+    # The name of the OIDC ID token cookie that will be set in the user's browser.
+    idCookieName: Cms-Oidc-Id
+    # The name of the OIDC refresh token cookie that will be set in the user's browser.
+    refreshCookieName: Cms-Oidc-Refresh
+    # Nonce lifespan. Remember that service will multiply lifespans/timeouts by a factor
+    # (usually 99% or thereabouts) to counter processing time and network lag.
+    nonceLifespan: 31m
+    # If false, stored tokens (from Redis) are assumed to be valid, and will NOT be validated
+    # against the OIDC provider JWKS.
+    validateStoredTokens: false
+    # Cookies returned to the client will have expiry dates based on the expiry dates of the tokens
+    # that they represent. To cover any network lag or processing time, their lifespans will be
+    # multiplied by this number.
+    expiryMultiplier: 0.99
+    # Configuration for the OIDC service.
+    service:
+      name: oidc-service
+      logging: Information
+      service:
+        type: ClusterIP
+        port: 80
+      image:
+        repository: corporatemodelling/common/kubernetes/auth/oidc-login-service
+        tag: 1.17.0
+    # The Redis service that will be created to store OIDC tokens in.
+    redis:
+      name: oidc-redis
+      service:
+        type: ClusterIP
+        port: 6379
+      image:
+        repository: redis
+        tag: 7.2.4
+  # The auth-proxy service.
+  proxy:
+    name: auth-proxy
+    logging: Information
+    ports:
+      http: 43483
+      https: 43484
+    service:
+      type: ClusterIP
+      port: 80
+    image:
+      repository: corporatemodelling/common/kubernetes/auth/auth-proxy
+      tag: 1.14.0
+    # Headers used for auth purposes.
+    headers:
+      request:
+        original:
+          method: Cms-Auth-Original-Method
+          scheme: X-Forwarded-Scheme
+          host: X-Forwarded-Host
+          port: X-Forwarded-Port
+          path: Cms-Auth-Original-Path
+          pathPrefix: X-Forwarded-Prefix
+        allowAuthenticationFailure: Cms-Allow-Authentication-Failure
+        authenticatedClaims: Cms-Authenticated-Claims
+        oidcRedirectQueryParameters: Cms-Oidc-Redirect-Query-Parameters
+      response:
+        # Name of the header that will contain authenticated claims when the authenticated
+        # request is eventually forwarded to the target webservice.
+        authenticatedClaims: Cms-Authenticated-Claims
+        # The response from the Auth Proxy will contain a header describing the OIDC login
+        # direct URI that should be redirected to if the Auth Proxy response is 401.
+        oidcLoginRedirectUri: Cms-Oidc-Login-Redirect-Uri
+        # The response from the Auth Proxy will contain a header describing the original
+        # request URI that should be redirected to AFTER successful authentication.
+        oidcOriginalRequestUri: Cms-Oidc-Original-Request-Uri
+  # The OPA "patch calculator" service.
+  opaPatchCalculator:
+    name: opa-patch-calculator
+    logLevel: debug
+    port: 8443
+    service:
+      type: ClusterIP
+      port: 443
+    image:
+      repository: openpolicyagent/opa
+      tag: 0.64.1
+
+# The actual auth delegate, which makes the auth decisions for webservices that the
+# user will install.
+opa:
+  # We don't want to use HTTPS in our internal OPA server. Just causes all manner
+  # of bother with certificate chains, etc.
+  useHttps: false
+  mgmt:
+    # So better tell it not to use HTTPS for health checks ...
+    startupProbe:
+      httpGet:
+        scheme: HTTP
+  authz:
+    enabled: false
