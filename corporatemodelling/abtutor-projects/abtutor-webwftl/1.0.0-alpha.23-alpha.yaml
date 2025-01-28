@@ -1,0 +1,279 @@
+# Image registries.
+registry:
+  # If image version is NOT a prerelease, this will be used.
+  # Build script will replace this placeholder with the actual value.
+  cmsPublicRegistry: ghcr.io/corporatemodelling
+  # If image version IS a prerelease, this will be used.
+  # Build script will replace this placeholder with the actual value.
+  cmsPrivateRegistry: cr.corporatemodelling.com
+  # If this is set, it is used regardless.
+  override:
+
+webwftl:
+  ingress:
+    prefix: webwftl
+  image:
+    repository: webwftl
+    tag: latest
+  replicaCount: 1
+
+easyquery:
+  ingress:
+    prefix: easyquery
+  image:
+    repository: corporatemodelling-easyquery
+    tag: latest
+  replicaCount: 1
+
+webforms:
+  ingress:
+    prefix: webforms
+  image:
+    repository: webforms
+    tag: latest
+  replicaCount: 1
+
+ux:
+  ingress:
+    prefix: ux
+  image:
+    repository: corporatemodelling/abtutor-projects/abtutor-ux/abtutor-ux
+    tag: latest
+  replicaCount: 1
+
+api:
+  order:
+    ingress:
+      prefix: order-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-orderservice
+      tag: latest
+    replicaCount: 1
+  license:
+    ingress:
+      prefix: license-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-licenseservice
+      tag: latest
+    replicaCount: 1
+  businessAccount:
+    ingress:
+      prefix: business-account-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-businessaccountservice
+      tag: latest
+    replicaCount: 1
+  product:
+    ingress:
+      prefix: product-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-productservice
+      tag: latest
+    replicaCount: 1
+  accounts:
+    ingress:
+      prefix: accounts-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-accountsservice
+      tag: latest
+    replicaCount: 1
+  batchinvoice:
+    ingress:
+      prefix: batchinvoice-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-batchinvoiceservice
+      tag: latest
+    replicaCount: 1
+  payment:
+    ingress:
+      prefix: payment-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-paymentservice
+      tag: latest
+    replicaCount: 1
+  xero:
+    # These are the id/secret of our temporary test client.
+    clientId: "0DF206319EFB4DA6AB442625123A8FB7"
+    clientSecret: VuyHmmse27OmZhxrV79_e6Ts4_ocOhqUp5H8Dlj4W2ixES51
+    # Rather than supply the secret directly, you can alternatively get the value from an existing secret.
+    existingSecret:
+      name:
+      namespace:
+      key:
+    ingress:
+      prefix: xero-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-xeroservice
+      tag: latest
+    replicaCount: 1
+  signup:
+    keycloak:
+      adminClientId: "admin-cli"
+      adminClientSecret: 7wevjow09i0weiojwefowemn97ywevjn23oinfe9wsr8uvnlqew93
+      # Rather than supply the secret directly, you can alternatively get the value from an existing secret.
+      existingSecret:
+        name:
+        namespace:
+        key:
+    ingress:
+      prefix: signup-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-signupservice
+      tag: latest
+    replicaCount: 1
+  adduser:
+    ingress:
+      prefix: adduser-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-adduserservice
+      tag: latest
+    replicaCount: 1
+  renewalinitiator:
+    ingress:
+      prefix: renewalinitiator-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-renewalinitiatorservice
+      tag: latest
+    replicaCount: 1
+  renewalorder:
+    ingress:
+      prefix: renewalorder-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-renewalorderservice
+      tag: latest
+    replicaCount: 1
+  renewalsendreminder:
+    ingress:
+      prefix: renewalsendreminder-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-renewalsendreminderservice
+      tag: latest
+    replicaCount: 1
+  renewalconverttoinvoice:
+    ingress:
+      prefix: renewalconverttoinvoice-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-renewalconverttoinvoiceservice
+      tag: latest
+    replicaCount: 1
+  renewalaccount:
+    ingress:
+      prefix: renewalaccount-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-renewalaccountservice
+      tag: latest
+    replicaCount: 1
+  renewalxerocheck:
+    ingress:
+      prefix: renewalxerocheck-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-renewalxerocheckservice
+      tag: latest
+    replicaCount: 1
+  renewallicence:
+    ingress:
+      prefix: renewallicence-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-renewallicenceservice
+      tag: latest
+    replicaCount: 1
+  renewalsendinvoice:
+    ingress:
+      prefix: renewalsendinvoice-api
+    image:
+      repository: corporatemodelling/abtutor-projects/api/abt-renewalsendinvoiceservice
+      tag: latest
+    replicaCount: 1
+
+contentcreation:
+  api:
+    storageSize:
+    image:
+      repository: cm/contentcreation/api
+      tag: latest
+    replicaCount: 1
+  jsonmerge:
+    ingress:
+      prefix: contentcreation
+    image:
+      repository: cm/contentcreation/jsonmerge
+      tag: latest
+    replicaCount: 1
+
+# Emailing ...
+emails:
+  templateservice:
+    image:
+      repository: cm/simpletemplatingservice
+      tag: latest
+    replicaCount: 1
+  emailcomposer:
+    ingress:
+      prefix: emails
+    image:
+      repository: corporatemodelling/abtutor-projects/abt.email.composer
+      tag: latest
+    replicaCount: 1
+
+# Database connection info.
+database:
+  host: cockroachdb-cluster-public
+  port: 26257
+  name: abtutor
+  debug: false
+  credentials:
+    username: abtadmin
+    # If sslCerts is set, it takes precedence over password
+    sslCerts:
+    password: ""
+
+# Redis connection info.
+redis:
+  host: redis
+  port: 6379
+  defaultDatabase: 7
+  abortConnect: false
+  connectTimeout: 3000
+
+# Common ingress info.
+ingress:
+  host: ablmsdev.com
+  className: nginx
+
+# Service account name
+serviceAccountName:
+
+# Name of database SSL certs mount in each pod
+databaseSslCertsMountName:
+
+# OpenID Connect auth settings.
+auth:
+  enabled: true
+  oidc:
+    # The name of the OpenID Connect client that has been configured in your IDP
+    clientId: abtutor-openid-connect
+    # URL of the well-known OIDC configuration from your IDP
+    configurationUrl: http://cms-keycloak-abtutor/cmsAuth/realms/ABtutor/.well-known/openid-configuration
+    # ID of client secret used during authentication
+    clientSecretId: ABtutor_{{clientId}}
+    # Base URI of client secret provider webservice.
+    clientSecretProviderBaseUri: http://cms-keycloak-abtutor/
+  # Policy IDs to apply during authn.
+  preAuthenticationPolicyIds: open_id_connect
+  # Name claim type.
+  nameClaimType: preferred_username
+  # Role claim type.
+  roleClaimType: role
+
+# Cronjob schedules
+cronjobSchedules:
+  batchInvoice: "0 1 1-4 * *"
+  payments: "0 1 * * *"
+  renewalInitiator: "*/5 * * * *"
+  renewalOrder: "*/5 * * * *"
+  renewalSendReminder: "*/5 * * * *"
+  renewalConvertToInvoice: "*/5 * * * *"
+  renewalAccount: "*/5 * * * *"
+  renewalXeroCheck: "*/5 * * * *"
+  renewalLicence: "*/5 * * * *"
+  renewalSendInvoice: "*/6 * * * *"
