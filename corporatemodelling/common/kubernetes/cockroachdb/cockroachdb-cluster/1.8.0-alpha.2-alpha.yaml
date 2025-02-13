@@ -1,0 +1,113 @@
+# Default values for cockroachdb-cluster.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Version of CockroachDB to use
+cockroachVersion: 23.2.3
+# How many in the cluster? (min=1, max=5)
+# Obviously, 1 node is not really a cluster. If you specify 1, a single-node server
+# will be created.
+# HOWEVER, 2 is not a valid value! From the CockroachDB docs:
+# "The following anti-patterns are ineffective or risky:
+# Single-region deployments using 2 zones, or multi-region deployments using 2 regions. In these cases,
+# the cluster would be unable to survive the loss of a single zone or a single region, respectively"
+clusterSize: 3
+# If set, the password for the root user will be set to this.
+# If not set, only certificate auth will be allowed for root.
+rootPassword:
+# How certs are used/generated.
+certificates:
+  # Base-64-encoded CA certificate and key to be used by the DB.
+  # If these are BOTH provided, certificates.secretNames.ca is ignored.
+  ca:
+    certificate:
+    privateKey:
+  # The names of existing secrets containing node and root certs.
+  # If you leave them blank, the chart will generate it's own.
+  # Each secret should contain ca.crt, tls.crt, and tls.key (the ca.crt should be
+  # the same in each secret).
+  # Don't worry, Cockroach/K8S logs will moan at you appropriately if you get it wrong.
+  # Be aware that if you intend to use any existing secrets as credentials for Flyway,
+  # you will need DER equivalents (tip: use Derrer)
+  secretNames:
+    # CA secret should contain ca.crt and ca.key
+    ca:
+    # Node secret should contain ca.crt, tls.crt & tls.key
+    # tls.crt should cover the name "node", plus any advertised domains and services.
+    # It can also be useful to cover "localhost" so that you can shell into the images and
+    # run ad-hoc SQL.
+    node:
+    # Root user secret should contain ca.crt, tls.crt & tls.key
+    # tls.crt should cover the name "root"
+    root:
+  # Lifespan of any generated certificates.
+  # Be careful! If you set this too high, it can "wrap around" into Victorian times.
+  lifespanDays: 3650
+# Additional users to create. Do NOT add any system users, such as "root".
+# For each user listed here:
+# 1) Unless "generateSecret" is false (meaning an existing manually-created client cert
+#    secret already exists), a client certificate and key will be generated, and added to K8S secrets.
+#    Be aware that if you intend to use any existing secrets as credentials for Flyway,
+#    you will need DER equivalents (tip: use Derrer)
+# 2) If "password" is set, SQL will be added to the init job that sets the user's password.
+additionalUsers: []
+#  - name: anne
+#    password: Pa55w0rdA!
+#  - name: bob
+#  - name: charles
+#    password: Pa55w0rdC!
+#  - name: deborah
+#  - name: evan
+#    password: Pa55w0rdE!
+#  - name: fred
+#    generateSecret: false
+# Persistent Volume Claim info for each cluster node.
+pvc:
+  # What size to look for?
+  size: 1Gi
+  # Mode
+  mode: Filesystem
+  # Access mode
+  accessMode: ReadWriteOnce
+# Persistent Volume info, if you haven't created your own.
+pv:
+  # If true, local persistent volumes will be created to back up the claims
+  create: false
+  # The host path to use for each PV.
+  # The zero-based index of the PV will be appended to this.
+  hostPath:
+
+# Init tasks.
+init:
+  # Cockroach SQL commands to run.
+  # Each entry should specify a secret, a config map, or a raw SQL string.
+  # In the case of secret or config map, the SQL contained within will be run.
+  # Each entry will be converted to a Kubernetes Job that will attempt to run
+  # the SQL until it succeeds.
+  sql: []
+  #    - configMap:
+  #      # Value of "key" defaults to "init.sql" if not specified.
+  #      key:
+  #    - secret:
+  #      # Value of "key" defaults to "init.sql" if not specified.
+  #      key:
+  #    - commands: |-
+  #        -- some commands
+  podSecurityContext:
+    {}
+    # fsGroup: 2000
+  securityContext:
+    {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Helm chart name overrides
+fullnameOverride:
+nameOverride:
