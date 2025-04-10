@@ -1,0 +1,11 @@
+# Automatically mount a ServiceAccount's API credentials?
+automount: true
+# Annotations to add to the service account
+annotations: {}
+# Credentials
+gitlab:
+  user: gitlab-ci-token
+  token: your-gitlab-token-here
+github:
+  user: corporatemodelling
+  token: your-github-token-here
