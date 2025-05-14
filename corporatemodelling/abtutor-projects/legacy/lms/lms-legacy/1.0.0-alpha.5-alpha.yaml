@@ -1,0 +1,40 @@
+ingress:
+  className: nginx
+  host: ablmsdev.com
+
+serviceAccountName: cms-dev-sa
+
+nginx:
+  port: 14076
+  ingressPrefix: oldlms-devapp
+
+app:
+  image:
+    pullPolicy: IfNotPresent
+    registry: cr.corporatemodelling.com
+    name: corporatemodelling/abtutor-projects/legacy/lms/lms-perl-app
+    label: lms
+  service:
+    port: 8100
+
+frontend:
+  ingressPrefix: oldlms-frontend
+  image:
+    pullPolicy: IfNotPresent
+    registry: cr.corporatemodelling.com
+    name: corporatemodelling/abtutor-projects/legacy/lms/lms-perl-app
+    label: lms-frontend
+
+database:
+  # Set this to false to use a brand new, empty database.
+  useLegacyData: true
+  image:
+    pullPolicy: IfNotPresent
+    registry: cr.corporatemodelling.com
+    name: corporatemodelling/abtutor-projects/legacy/lms/lms-perl-app
+    label: db
+  initImage:
+    pullPolicy: IfNotPresent
+    registry: cr.corporatemodelling.com
+    name: corporatemodelling/abtutor-projects/legacy/lms/lms-legacy-database-initcontainer
+    label: latest
